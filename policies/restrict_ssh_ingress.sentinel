@@ -1,0 +1,39 @@
+import "tfplan/v2" as tfplan
+
+# Identify managed AWS security groups.
+security_groups = filter tfplan.resource_changes as address, resource {
+  resource.mode is "managed" and
+  resource.type is "aws_security_group" and
+  resource.change.after is not null
+}
+
+# Reject unrestricted IPv4 SSH access.
+ssh_ipv4_restricted = rule {
+  all security_groups as address, security_group {
+    all security_group.change.after.ingress as ingress {
+      ingress.from_port > 22 or
+      ingress.to_port < 22 or
+      all ingress.cidr_blocks as cidr {
+        cidr is not "0.0.0.0/0"
+      }
+    }
+  }
+}
+
+# Reject unrestricted IPv6 SSH access.
+ssh_ipv6_restricted = rule {
+  all security_groups as address, security_group {
+    all security_group.change.after.ingress as ingress {
+      ingress.from_port > 22 or
+      ingress.to_port < 22 or
+      all ingress.ipv6_cidr_blocks as cidr {
+        cidr is not "::/0"
+      }
+    }
+  }
+}
+
+# Enforce both SSH security checks.
+main = rule {
+  ssh_ipv4_restricted and ssh_ipv6_restricted
+}
