@@ -1,0 +1,23 @@
+import "tfconfig/v2" as tfconfig
+import "tfplan/v2" as tfplan
+
+# AWS regions approved by the organisation.
+approved_aws_regions = [
+  "eu-west-1",
+  "eu-west-2",
+  "eu-central-1",
+  "eu-north-1",
+]
+
+# Identify AWS provider configurations.
+aws_providers = filter tfconfig.providers as key, provider {
+  provider.name is "aws"
+}
+
+# Every AWS provider must use the approved region variable.
+main = rule {
+  all aws_providers as key, provider {
+    "var.aws_region" in provider.config.region.references and
+    tfplan.variables["aws_region"].value in approved_aws_regions
+  }
+}
