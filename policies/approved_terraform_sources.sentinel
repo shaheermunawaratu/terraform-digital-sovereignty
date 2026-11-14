@@ -1,0 +1,14 @@
+import "tfconfig/v2" as tfconfig
+
+# Identify configured Terraform providers.
+configured_providers = tfconfig.providers
+
+# Require at least one configured provider.
+# Every provider must use the approved AWS source and version.
+main = rule {
+  length(configured_providers) > 0 and
+  all configured_providers as key, provider {
+    provider.full_name is "registry.terraform.io/hashicorp/aws" and
+    provider.version_constraint is "~> 5.0"
+  }
+}
