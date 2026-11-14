@@ -1,0 +1,36 @@
+mock "tfplan/v2" {
+  data = {
+    resource_changes = {
+      "aws_instance.non_compliant" = {
+        mode = "managed"
+        type = "aws_instance"
+        change = {
+          actions = ["create"]
+          after = {
+            root_block_device = [
+              {
+                encrypted = false
+              }
+            ]
+          }
+        }
+      }
+      "aws_ebs_volume.compliant" = {
+        mode = "managed"
+        type = "aws_ebs_volume"
+        change = {
+          actions = ["create"]
+          after = {
+            encrypted = true
+          }
+        }
+      }
+    }
+  }
+}
+
+test {
+  rules = {
+    main = false
+  }
+}
