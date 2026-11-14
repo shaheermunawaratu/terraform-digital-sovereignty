@@ -1,0 +1,22 @@
+import "tfplan/v2" as tfplan
+
+# EC2 instance types approved by the organisation.
+approved_instance_types = [
+  "t3.micro",
+  "t3.small",
+  "t3.medium",
+]
+
+# Select managed EC2 instances that remain after proposed changes.
+ec2_instances = filter tfplan.resource_changes as address, resource {
+  resource.mode is "managed" and
+  resource.type is "aws_instance" and
+  resource.change.after is not null
+}
+
+# Every proposed EC2 instance must use an approved type.
+main = rule {
+  all ec2_instances as address, instance {
+    instance.change.after.instance_type in approved_instance_types
+  }
+}
